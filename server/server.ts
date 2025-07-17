@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { exerciseEndpoints } from './endpoints/exercise.ts';
+import { userEndpoints } from './endpoints/user.ts';
+import { workoutEndpoints } from './endpoints/workout.ts';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +25,8 @@ app.get('/api/health', (req, res) => {
 
 // Register endpoints
 exerciseEndpoints(app);
+userEndpoints(app);
+workoutEndpoints(app);
 
 // Start server
 app.listen(PORT, () => {

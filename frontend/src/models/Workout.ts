@@ -1,5 +1,14 @@
-// Frontend Exercise model for communicating with the backend API
+// Frontend Workout model for communicating with the backend API
 import { API_CONFIG } from '../config/api';
+
+export interface Workout {
+  id: number;
+  name: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  exercises?: Exercise[];
+}
 
 export interface Exercise {
   id: number;
@@ -20,19 +29,16 @@ export interface Set {
   updatedAt: string;
 }
 
-export class ExerciseModel {
-  static async getAll(token: string, workoutId: string): Promise<Exercise[]> {
+export class WorkoutModel {
+  static async getAll(token: string): Promise<Workout[]> {
     try {
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}/exercises?workoutId=${workoutId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_CONFIG.BASE_URL}/workouts`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -40,21 +46,20 @@ export class ExerciseModel {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching exercises:', error);
+      console.error('Error fetching workouts:', error);
       throw error;
     }
   }
 
-  static async create(token: string, workoutId: string, name: string): Promise<Exercise> {
+  static async create(token: string, name: string): Promise<Workout> {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/exercises`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/workouts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          workoutId,
           name,
         }),
       });
@@ -65,15 +70,15 @@ export class ExerciseModel {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating exercise:', error);
+      console.error('Error creating workout:', error);
       throw error;
     }
   }
 
-  static async delete(token: string, exerciseId: string): Promise<void> {
+  static async delete(token: string, workoutId: string): Promise<void> {
     try {
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/exercises/${exerciseId}`,
+        `${API_CONFIG.BASE_URL}/workouts/${workoutId}`,
         {
           method: 'DELETE',
           headers: {
@@ -87,14 +92,14 @@ export class ExerciseModel {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error deleting exercise:', error);
+      console.error('Error deleting workout:', error);
       throw error;
     }
   }
 
-  static async update(token: string, exerciseId: string, name: string): Promise<void> {
+  static async update(token: string, workoutId: string, name: string): Promise<void> {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/exercises/${exerciseId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/workouts/${workoutId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +114,7 @@ export class ExerciseModel {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error updating exercise:', error);
+      console.error('Error updating workout:', error);
       throw error;
     }
   }

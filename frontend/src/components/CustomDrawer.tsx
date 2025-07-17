@@ -1,16 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { useAuth, useClerk, useOAuth } from '@clerk/clerk-expo';
+import { useAuth, useClerk, useOAuth, useUser } from '@clerk/clerk-expo';
 import * as WebBrowser from 'expo-web-browser';
+import { UserModel } from '../models/User';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const CustomDrawer = (props: any) => {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
   const { signOut } = useClerk();
   const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
   const [loading, setLoading] = useState(false);
+
+  // Effect to create user in database when they sign in
+  useEffect(() => {
+    const createUserInDatabase = async () => {
+      if (isSignedIn && user?.id) {
+        try {
+          // Get the authentication token from Clerk
+          const token = await getToken();
+          if (token) {
+            await UserModel.findOrCreate(token);
+            console.log('User created/verified in database');
+          }
+        } catch (dbError) {
+          console.error('Error creating user in database:', dbError);
+          // Don't fail the sign-in if database creation fails
+        }
+      }
+    };
+
+    createUserInDatabase();
+  }, [isSignedIn, user?.id, getToken]);
 
   const handleSignOut = async () => {
     try {
@@ -25,8 +48,9 @@ const CustomDrawer = (props: any) => {
     try {
       const { createdSessionId, setActive } = await startOAuthFlow();
 
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
+        
         // Close the drawer after successful sign-in
         props.navigation.closeDrawer();
       }

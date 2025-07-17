@@ -1,18 +1,26 @@
 import { Exercise } from "../models/exercise.ts";
+import { User } from "../models/user.ts";
+import { authenticateUser } from "../middleware/auth.ts";
 import type { Request, Response } from "express";
 
 export const exerciseEndpoints = (app: any) => {
-  // Get all exercises for a workout
-  app.get("/api/exercises", async (req: Request, res: Response) => {
+  // Get all exercises for a workout - requires authentication
+  app.get("/api/exercises", authenticateUser, async (req: Request, res: Response) => {
     try {
-      const userId = req.query.userId as string;
+      const userId = req.userId;
+      
       if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({ error: "User ID not found in token" });
       }
+      
       const workoutId = req.query.workoutId as string;
       if (!workoutId) {
         return res.status(400).json({ error: "Workout ID is required" });
       }
+
+      // Ensure user exists in database
+      await User.findOrCreate(userId);
+      
       const exercises = await Exercise.getAll(workoutId, userId);
       res.json(exercises);
     } catch (error: any) {
@@ -21,19 +29,25 @@ export const exerciseEndpoints = (app: any) => {
     }
   });
 
-  // Create a new exercise
-  app.post("/api/exercises", async (req: Request, res: Response) => {
+  // Create a new exercise - requires authentication
+  app.post("/api/exercises", authenticateUser, async (req: Request, res: Response) => {
     try {
-      const userId = req.body.userId;
+      const userId = req.userId;
+      
       if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({ error: "User ID not found in token" });
       }
+      
       const { workoutId, name } = req.body;
       if (!workoutId || !name) {
         return res
           .status(400)
           .json({ error: "Workout ID and name are required" });
       }
+
+      // Ensure user exists in database
+      await User.findOrCreate(userId);
+      
       const exercise = await Exercise.create(workoutId, userId, name);
       res.json(exercise);
     } catch (error: any) {
@@ -42,13 +56,15 @@ export const exerciseEndpoints = (app: any) => {
     }
   });
 
-  // Delete an exercise
-  app.delete("/api/exercises/:id", async (req: Request, res: Response) => {
+  // Delete an exercise - requires authentication
+  app.delete("/api/exercises/:id", authenticateUser, async (req: Request, res: Response) => {
     try {
-      const userId = req.query.userId as string;
+      const userId = req.userId;
+      
       if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({ error: "User ID not found in token" });
       }
+      
       const { id } = req.params;
       await Exercise.delete(id, userId);
       res.json({ success: true });
@@ -58,13 +74,15 @@ export const exerciseEndpoints = (app: any) => {
     }
   });
 
-  // Update an exercise
-  app.put("/api/exercises/:id", async (req: Request, res: Response) => {
+  // Update an exercise - requires authentication
+  app.put("/api/exercises/:id", authenticateUser, async (req: Request, res: Response) => {
     try {
-      const userId = req.body.userId;
+      const userId = req.userId;
+      
       if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({ error: "User ID not found in token" });
       }
+      
       const { id } = req.params;
       const { name } = req.body;
       await Exercise.update(id, userId, name);
