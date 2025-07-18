@@ -1,5 +1,4 @@
 import { View, Text, ScrollView } from 'react-native';
-import { useState } from 'react';
 import { useUser } from '@clerk/clerk-expo';
 
 import StreakTracker from './StreakTracker';
