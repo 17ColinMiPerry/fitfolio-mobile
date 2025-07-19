@@ -1,6 +1,6 @@
 // API Configuration - Update this when your ngrok URL changes
 export const API_CONFIG = {
-  BASE_URL: 'https://de01c4de059c.ngrok-free.app/api',
+  BASE_URL: 'https://8e6009c736c9.ngrok-free.app/api',
 } as const;
 
 // Helper function to get the full API URL for a specific endpoint

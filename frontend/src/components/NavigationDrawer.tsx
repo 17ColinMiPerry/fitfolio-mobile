@@ -1,9 +1,9 @@
-import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import CustomDrawer from './CustomDrawer';
 
 import HomeScreen from '../pages/home';
+import WorkoutsPage from '../pages/Workouts';
 
 const Drawer = createDrawerNavigator();
 
@@ -35,6 +35,14 @@ const NavigationDrawer = () => {
                     options={{
                         drawerLabel: 'Home',
                         title: 'Home',
+                    }}
+                />
+                <Drawer.Screen 
+                    name="Workouts" 
+                    component={WorkoutsPage}
+                    options={{
+                        drawerLabel: 'Workouts',
+                        title: 'Workouts',
                     }}
                 />
             </Drawer.Navigator>
