@@ -10,6 +10,7 @@ import AddExerciseModal from "./AddExerciseModal"
 import AddSetModal from "./AddSetModal"
 import EditExerciseModal from "./EditExerciseModal"
 import EditSetModal from "./EditSetModal"
+import NotesModal from "./NotesModal"
 
 export default function WorkoutsPage () {
     const { getToken } = useAuth()
@@ -20,9 +21,24 @@ export default function WorkoutsPage () {
     const [showAddSetModal, setShowAddSetModal] = useState(false)
     const [showEditExerciseModal, setShowEditExerciseModal] = useState(false)
     const [showEditSetModal, setShowEditSetModal] = useState(false)
+    const [showNotesModal, setShowNotesModal] = useState(false)
     const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
     const [selectedSet, setSelectedSet] = useState<SetType | null>(null)
-    const [expandedExercises, setExpandedExercises] = useState<Set<number>>(new Set())
+    const [selectedNotes, setSelectedNotes] = useState("")
+    const [selectedSetInfo, setSelectedSetInfo] = useState("")
+    const [expandedSets, setExpandedSets] = useState<Set<number>>(new Set())
+
+    const handleToggleSets = (exerciseId: number) => {
+        setExpandedSets(prev => {
+            const newSet = new Set(prev)
+            if (newSet.has(exerciseId)) {
+                newSet.delete(exerciseId)
+            } else {
+                newSet.add(exerciseId)
+            }
+            return newSet
+        })
+    }
 
     const fetchWorkouts = async () => {
         try {
@@ -179,16 +195,6 @@ export default function WorkoutsPage () {
         }
     }
 
-    const toggleExerciseExpansion = (exerciseId: number) => {
-        const newExpanded = new Set(expandedExercises)
-        if (newExpanded.has(exerciseId)) {
-            newExpanded.delete(exerciseId)
-        } else {
-            newExpanded.add(exerciseId)
-        }
-        setExpandedExercises(newExpanded)
-    }
-
     const handleDeleteSet = async (setId: number) => {
         try {
             const token = await getToken()
@@ -202,6 +208,12 @@ export default function WorkoutsPage () {
             console.error('Error deleting set:', error)
             Alert.alert('Error', error.message || 'Failed to delete set')
         }
+    }
+
+    const handleShowNotes = (set: SetType) => {
+        setSelectedNotes(set.notes || "")
+        setSelectedSetInfo(`${set.reps} reps @ ${set.weight}lbs`)
+        setShowNotesModal(true)
     }
 
     return (
@@ -230,83 +242,102 @@ export default function WorkoutsPage () {
                                         </Text>
                                     </View>
 
-                                    {/* Debug info */}
-                                    <Text className="text-xs text-gray-400 text-center mb-2">
-                                        Exercises: {currentWorkout.exercises?.length || 0}
-                                    </Text>
-
                                     {/* Exercises Table Header */}
                                     <View className="flex-row bg-gray-100 p-2 rounded-t-lg border-b border-gray-200">
-                                        <Text className="flex-1 font-semibold text-gray-700 text-sm">EXERCISE</Text>
-                                        <Text className="flex-1 font-semibold text-gray-700 text-sm">CREATED</Text>
-                                        <Text className="flex-1 font-semibold text-gray-700 text-sm">ACTIONS</Text>
+                                        <Text className="flex-1 font-semibold text-gray-700 text-base">EXERCISE</Text>
+                                        <Text className="flex-1 font-semibold text-gray-700 text-base">CREATED</Text>
+                                        <Text className="flex-1 font-semibold text-gray-700 text-base">ACTIONS</Text>
                                     </View>
 
                                     {/* Exercises List */}
                                     {currentWorkout.exercises && currentWorkout.exercises.length > 0 ? (
                                         currentWorkout.exercises.map((exercise) => (
                                             <View key={exercise.id}>
+                                                {/* Exercise Row */}
                                                 <View className="flex-row p-2 border-b border-gray-100">
-                                                    <TouchableOpacity 
-                                                        className="flex-1 flex-row items-center"
-                                                        onPress={() => toggleExerciseExpansion(exercise.id)}
-                                                    >
-                                                        <Text className="text-gray-800 text-sm flex-1">{exercise.name}</Text>
-                                                        <Text className="text-xs text-gray-500">
-                                                            {new Date(exercise.createdAt).toLocaleDateString()}
-                                                        </Text>
-                                                        <Text className="text-xs text-gray-400 ml-2">
-                                                            {expandedExercises.has(exercise.id) ? '▼' : '▶'}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                    <View className="flex-row gap-2">
+                                                    <Text className="flex-1 text-gray-800 text-base">{exercise.name}</Text>
+                                                    <Text className="flex-1 text-sm text-gray-500">
+                                                        {new Date(exercise.createdAt).toLocaleDateString()}
+                                                    </Text>
+                                                    <View className="flex-1 flex-row gap-4 justify-start">
                                                         <TouchableOpacity onPress={() => handleEditExercise(exercise)}>
-                                                            <Text className="text-blue-500 text-sm">✏️</Text>
+                                                            <Text className="text-blue-500 text-base">✏️</Text>
                                                         </TouchableOpacity>
                                                         <TouchableOpacity onPress={() => handleDeleteExercise(exercise.id)}>
-                                                            <Text className="text-red-500 text-sm">🗑️</Text>
-                                                        </TouchableOpacity>
-                                                        <TouchableOpacity onPress={() => handleAddSet(exercise)}>
-                                                            <Text className="text-green-500 text-sm">➕</Text>
+                                                            <Text className="text-red-500 text-base">🗑️</Text>
                                                         </TouchableOpacity>
                                                     </View>
                                                 </View>
                                                 
-                                                {/* Sets for this exercise */}
-                                                {expandedExercises.has(exercise.id) && (
-                                                    <View className="bg-gray-50 p-2">
-                                                        <Text className="text-xs font-semibold text-gray-600 mb-2">Sets:</Text>
-                                                        {exercise.sets && exercise.sets.length > 0 ? (
-                                                            exercise.sets.map((set) => (
-                                                                <View key={set.id} className="flex-row justify-between items-center p-1 border-b border-gray-100">
-                                                                    <Text className="text-xs text-gray-700">
-                                                                        {set.reps} reps @ {set.weight}lbs
-                                                                    </Text>
-                                                                    {set.notes && (
-                                                                        <Text className="text-xs text-gray-500 flex-1 ml-2">
-                                                                            "{set.notes}"
-                                                                        </Text>
-                                                                    )}
-                                                                    <View className="flex-row gap-1">
-                                                                        <TouchableOpacity onPress={() => handleEditSet(set)}>
-                                                                            <Text className="text-blue-500 text-xs">✏️</Text>
-                                                                        </TouchableOpacity>
-                                                                        <TouchableOpacity onPress={() => handleDeleteSet(set.id)}>
-                                                                            <Text className="text-red-500 text-xs">🗑️</Text>
-                                                                        </TouchableOpacity>
-                                                                    </View>
-                                                                </View>
-                                                            ))
-                                                        ) : (
-                                                            <Text className="text-xs text-gray-500">No sets yet</Text>
+                                                {/* Sets for this exercise - collapsible */}
+                                                <View className="bg-gray-50 p-2 border-b border-gray-100">
+                                                    <View className="flex-row items-center mb-2">
+                                                        <Text className="text-sm font-semibold text-gray-600">Sets:</Text>
+                                                        {exercise.sets && exercise.sets.length > 0 && !expandedSets.has(exercise.id) && (
+                                                            <TouchableOpacity onPress={() => handleToggleSets(exercise.id)}>
+                                                                <Text className="text-sm text-blue-500 ml-2">Show set{exercise.sets.length > 1 ? 's' : ''}</Text>
+                                                            </TouchableOpacity>
+                                                        )}
+                                                        {exercise.sets && exercise.sets.length > 0 && expandedSets.has(exercise.id) && (
+                                                            <TouchableOpacity onPress={() => handleToggleSets(exercise.id)}>
+                                                                <Text className="text-sm text-blue-500 ml-2">(Hide sets)</Text>
+                                                            </TouchableOpacity>
                                                         )}
                                                     </View>
-                                                )}
+                                                    {exercise.sets && exercise.sets.length > 0 && expandedSets.has(exercise.id) && (
+                                                        <>
+                                                        {/* Sets Table Header */}
+                                                        <View className="flex-row bg-gray-100 p-2 rounded-t mb-1">
+                                                            <Text className="flex-1 font-semibold text-gray-700 text-sm">REPS</Text>
+                                                            <Text className="flex-1 font-semibold text-gray-700 text-sm">WEIGHT</Text>
+                                                            <Text className="flex-1 font-semibold text-gray-700 text-sm">NOTES</Text>
+                                                            <Text className="flex-1 font-semibold text-gray-700 text-sm">ACTIONS</Text>
+                                                        </View>
+                                                        {exercise.sets.map((set) => (
+                                                            <View key={set.id} className="flex-row p-2 border-b border-gray-100">
+                                                                <Text className="flex-1 text-sm text-gray-700">
+                                                                    {set.reps}
+                                                                </Text>
+                                                                <Text className="flex-1 text-sm text-gray-700">
+                                                                    {set.weight}lbs
+                                                                </Text>
+                                                                <View className="flex-1">
+                                                                    {set.notes ? (
+                                                                        <TouchableOpacity onPress={() => handleShowNotes(set)}>
+                                                                            <Text className="text-blue-500 text-sm">Read Note</Text>
+                                                                        </TouchableOpacity>
+                                                                    ) : (
+                                                                        <Text className="text-sm text-gray-400">No notes</Text>
+                                                                    )}
+                                                                </View>
+                                                                <View className="flex-1 flex-row gap-2 justify-center">
+                                                                    <TouchableOpacity onPress={() => handleEditSet(set)}>
+                                                                        <Text className="text-blue-500 text-sm">✏️</Text>
+                                                                    </TouchableOpacity>
+                                                                    <TouchableOpacity onPress={() => handleDeleteSet(set.id)}>
+                                                                        <Text className="text-red-500 text-sm">🗑️</Text>
+                                                                    </TouchableOpacity>
+                                                                </View>
+                                                            </View>
+                                                        ))}
+                                                        </>
+                                                    )}
+                                                    {(!exercise.sets || exercise.sets.length === 0) && (
+                                                        <Text className="text-sm text-gray-500">No sets yet</Text>
+                                                    )}
+                                                    {/* Add Set Button */}
+                                                    <TouchableOpacity 
+                                                        onPress={() => handleAddSet(exercise)}
+                                                        className="mt-2 bg-green-500 p-2 rounded"
+                                                    >
+                                                        <Text className="text-white text-center text-sm">Add Set</Text>
+                                                    </TouchableOpacity>
+                                                </View>
                                             </View>
                                         ))
                                     ) : (
                                         <View className="p-3 text-center">
-                                            <Text className="text-gray-500 text-sm">No exercises added yet</Text>
+                                            <Text className="text-gray-500 text-base">No exercises added yet</Text>
                                         </View>
                                     )}
 
@@ -360,6 +391,12 @@ export default function WorkoutsPage () {
                 onClose={() => setShowEditSetModal(false)}
                 set={selectedSet}
                 onSetUpdated={handleSetUpdated}
+            />
+            <NotesModal 
+                show={showNotesModal}
+                onClose={() => setShowNotesModal(false)}
+                notes={selectedNotes}
+                setInfo={selectedSetInfo}
             />
         </ScrollView>
     )
